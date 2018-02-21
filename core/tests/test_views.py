@@ -1,0 +1,45 @@
+from django.core import mail
+from django.test import TestCase, Client
+from django.urls import reverse
+
+
+class IndexViewTestCase(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('core:index')
+
+    def tearDown(self):
+        pass
+
+    def test_status_cod(self):
+        response = self.client.get(self.url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_template_used(self):
+        response = self.client.get(self.url)
+        self.assertTemplateUsed(response, 'index.html')
+
+
+class ContactViewTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('core:contact')
+
+    def test_view_ok(self):
+        response = self.client.get(self.url)
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'contact.html')
+
+    def test_form(self):
+        data = {'name': '', 'message': '', 'email': ''}
+        response = self.client.post(self.url, data)
+        self.assertFormError(response, 'form', 'name', 'Este campo é obrigatório.')
+        self.assertFormError(response, 'form', 'email', 'Este campo é obrigatório.')
+        self.assertFormError(response, 'form', 'message', 'Este campo é obrigatório.')
+
+        data = {'name': 'Wilker Paz', 'message': 'teste de msg', 'email': 'wilker.paz@hotmail.com'}
+        response = self.client.post(self.url, data)
+        self.assertTrue(response.context['success'])
+        self.assertEquals(len(mail.outbox), 1)
+        self.assertEquals(mail.outbox[0].subject, 'Contato do Django E-Commerce')

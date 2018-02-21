@@ -1,0 +1,1 @@
+web: gunicorn appcontroleestoque.wsgi --log-file -
