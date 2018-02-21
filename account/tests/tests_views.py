@@ -49,6 +49,25 @@ class RegisterViewTestCase(TestCase):
         self.assertEquals(response.status_code, 200)
         self.assertTemplateUsed(response, template_name='account/login.html')
 
+    def test_redirect_logout(self):
+        response = self.client.get(self.url_account_logout)
+        self.assertRedirects(response, '/')
+
+    def test_redirect_index(self):
+        self.client.get(self.url_account_logout)
+        response = self.client.get(self.url_account_index)
+        self.assertRedirects(response, self.url_account_login+'?next='+self.url_account_index)
+
+    def test_redirect_update_user(self):
+        self.client.get(self.url_account_logout)
+        response = self.client.get(self.url_account_update_user)
+        self.assertRedirects(response, self.url_account_login+'?next='+self.url_account_update_user)
+
+    def test_redirect_update_password(self):
+        self.client.get(self.url_account_logout)
+        response = self.client.get(self.url_account_update_password)
+        self.assertRedirects(response, self.url_account_login+'?next='+self.url_account_update_password)
+
     def test_page_index(self):
         response = self.client.get(self.url_account_index)
         self.assertEquals(response.status_code, 200)
@@ -62,52 +81,23 @@ class RegisterViewTestCase(TestCase):
         self.assertEquals(response.status_code, 200)
 
     def test_update_user(self):
-        data_update_user = {'name': 'test update', 'username': self.user.username, 'email': 'test@test.com'}
-        self.assertEquals(self.user.username, 'test')
-        self.client.post(self.url_account_update_user, data_update_user)
+        data_update_user = {'name': 'test update', 'username': 'test_update', 'email': 'test_update@test.com'}
+        response = self.client.post(self.url_account_update_user, data_update_user)
+        self.assertRedirects(response, self.url_account_index)
+
         self.user.refresh_from_db()
-        self.user = User.objects.get(username='test')
         self.assertEquals(self.user.name, 'test update')
+        self.assertEquals(self.user.username, 'test_update')
+        self.assertEquals(self.user.email, 'test_update@test.com')
 
-#        self.assertRedirects(response, self.url_account_index)
+    def test_update_password(self):
 
-
-
-
-#     def test_register_error(self):
-#         data = {'username': 'test', 'password1': 'test123', 'password2': 'test123'}
-#         response = self.client.post(self.url, data)
-#         self.assertFormError(response, 'form', 'email', 'Este campo é obrigatório.')
-#
-#
-# class UpdateUserTestCase(TestCase):
-#
-#     def setUp(self):
-#         self.client = Client()
-#         self.url_login = reverse('account:login')
-#         self.url = reverse('account:update_user')
-#         # self.user = mommy.make(User)
-#         # self.name = 'Mommy Test'
-#         # self.username = 'mommy'
-#         # self.email = 'mommy@mommy.com'
-#         # self.password1('Salobo@123')
-#         # self.password2('Salobo@123')
-#
-#
-#     def test_response(self):
-#         response = self.client.get(self.url)
-#         self.assertEquals(response.status_code, 302)
-#
-#     def test1_update_user_ok(self):
-#         data = {'name': 'test first', 'email': 'test@test.com'}
-#         self.client.login(username='mommy', password='Salobo@123')
-#         self.assertEquals(self.user.username, 'mommy')
-#         response = self.client.post(self.url, data)
-#         url_redirect = reverse('account:login')
-#         self.assertRedirects(response, url_redirect)
-#         self.assertEquals(response.status_code, 302)
-#         self.user.refresh_from_db()
-#         user = User.objects.get(username='mommy')
-#         self.assertEquals(user.name, 'test first')
-#         self.assertEquals(user.email, 'test@test.com')
-#
+        data_update_password = {
+            'old_password': 'test123Ok',
+            'new_password1': 'Salobo@1234',
+            'new_password2': 'Salobo@1234'}
+        old_password = self.user.password
+        self.client.post(self.url_account_update_password, data_update_password)
+        self.user.refresh_from_db()
+        new_password = self.user.password
+        self.assertNotEquals(old_password, new_password)

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
 
-from .forms import ContactForms
+from core.forms import ContactForms
 
 
 class IndexView(TemplateView):
